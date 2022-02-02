@@ -1,0 +1,17 @@
+{
+  "name": "mysql-auto-backuper",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "dotenv": "^16.0.0",
+    "googleapis": "^92.0.0",
+    "node-cron": "^3.0.0"
+  }
+}
