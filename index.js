@@ -70,7 +70,6 @@ function RealizaBackupOffline() {
 	return new Promise((resolve, reject)=>{	
 		let file = nameForDump(driveFolder)		
 		let DirAndFilename = nameForDump(backupFolderLocally+driveFolder)
-		// Realiza backup em Documents/Sale2
 		console.log(DirAndFilename);
 		mysqldump(DirAndFilename)
 		.then(rst => {						
