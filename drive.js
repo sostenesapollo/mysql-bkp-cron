@@ -1,155 +1,94 @@
 const fs = require('fs');
-const readline = require('readline');
 const {google} = require('googleapis');
-const SCOPES = ['https://www.googleapis.com/auth/drive'];
 const TOKEN_PATH = './token.json';
+var drive;
+var auth;
 
-var params = {}
 
-function authorize(credentials, callback, callback2) {
-  const {client_secret, client_id, redirect_uris} = credentials.installed;
-  const oAuth2Client = new google.auth.OAuth2(client_id, client_secret, redirect_uris[0]);
-  fs.readFile(TOKEN_PATH, (err, token) => {
-    if (err) return getAccessToken(oAuth2Client, callback);
-    oAuth2Client.setCredentials(JSON.parse(token));
-    callback(oAuth2Client,callback2);
-  })
-}
-
-function getAccessToken(oAuth2Client, callback) {
-  const authUrl = oAuth2Client.generateAuthUrl({
-    access_type: 'offline',
-    scope: SCOPES,
-  });
-  console.log('Authorize this app by visiting this url:', authUrl);
-  const rl = readline.createInterface({
-    input: process.stdin,
-    output: process.stdout,
-  });
-  rl.question('Enter the code from that page here: ', (code) => {
-    rl.close();
-    oAuth2Client.getToken(code, (err, token) => {
-      if (err) return console.error('Error retrieving access token', err);
-      oAuth2Client.setCredentials(token);
-      // Store the token to disk for later program executions
-      fs.writeFile(TOKEN_PATH, JSON.stringify(token), (err) => {
-        if (err) return console.error(err);
-        console.log('Token stored to', TOKEN_PATH);
-      });
-      callback(oAuth2Client);
-    });
-  });
-}
-
-function uploadFile(auth, callback) {
-    
-    const drive = google.drive({version: 'v3', auth});    
+const search = ({name, fileId}) => new Promise((resolve, reject) => {  
   
-    var fileMetadata = { 'name': params['filename'],parents:[params.folderid] }      
-    var media = { body: fs.createReadStream(params.dir+params.filename) };        
+  let q;
+  
+  if(name) q = `name = '${name}'`;
+  if(fileId) q = name ? `and '${fileId}' in parents` : `'${fileId}' in parents`;
 
-    console.log('Save in drive, parent:', params.folderid);
+  drive.files.list({
+    fileId,
+    includeRemoved: false,
+    spaces: 'drive',
+    fields: 'nextPageToken, files(id, name, mimeType)',
+    q
+  }, (err, res) => {
+    if (err || res.errors) reject(err.errors)
+    resolve(res.data.files)
+  })
 
-    drive.files.create(
-      {resource: fileMetadata,media: media, fields: 'id'}, 
-      (err, file)=>{ if(err){callback({erro:err})}else{callback(file['data']['id'])} })    
-}
+})
 
-function createfolderifnotexists(auth, callback) { 
-  action('searchByName', {name: params.name}, folder => {    
-    const drive = google.drive({version: 'v3', auth});        
-    if(folder[0] && folder[0]['id']) {                
-      callback({msg:"pasta existe"})
-    } else {
-      console.log("Pasta não existe.");    
-      action('createFolder',{name: params.name},callback)
-    }        
+const uploadFile = (callback) => {
+  var fileMetadata = { 'name': params['filename'],parents:[params.folderid] }      
+  var media = { body: fs.createReadStream(params.dir+params.filename) };        
+
+  drive.files.create({resource: fileMetadata,media: media, fields: 'id'}, (err, file)=>{ 
+    if(err){callback({erro:err})}else{callback(file['data']['id'])} 
   })
 }
 
-function deleteFile(auth, callback) {
- const drive = google.drive({version: 'v3', auth});  
-  drive.files.delete({
-    'fileId': params.id
-  }, function (err, file) {
-    callback({success:file, err})    
-  }); 
+const createFolderIfNotExists = ({ name, parents }) => { 
+  return new Promise(async (resolve, reject) => {
+      const folder = await search({name})
+      if(folder.length) {
+        resolve({created: false, exists: true})
+      } else {
+        await createFolder({ name, parents })
+        resolve({created: true})
+      }
+  })
 }
 
-function createFolder(auth, callback) {
-  const drive = google.drive({version: 'v3', auth});
+const deleteFile = ({fileId}) => new Promise((resolve, reject) => {
+  drive.files.delete({'fileId': params.id}, (err, file) => {
+    if(err) reject(err)
+    resolve(file)
+  })
+})
 
-  var fileMetadata = {
-    'name': params.name,
-    'mimeType': 'application/vnd.google-apps.folder',    
-    parents: params['parents']    
-  };
-  console.log(`Create folder ${params.name}`);  
-  drive.files.create({
-    resource: fileMetadata,
-    fields: 'id'    
-  }, function (err, file) {  
-    callback({success:file, err})
+const createFolder = async ({name, parents}) => new Promise((resolve, reject)=>{
+  drive.files.create({resource: { name,'mimeType': 'application/vnd.google-apps.folder', parents},fields: 'id'}, (err, file) => {
+    if(err) reject(err)
+    resolve(file)
   });
-}
-
-function listFiles(auth, callback) {
-  const drive = google.drive({version: 'v3', auth});
-       
-  drive.files.list({    
-    fields: 'nextPageToken, files(id, name)'    
-  }, (err, res) => {
-    if (err) return console.log('The API returned an error: ' + err);
+})
+  
+const listFiles = () => new Promise((resolve, reject) => {
+  drive.files.list({fields: 'nextPageToken, files(id, name)'}, (err, res) => {
+    if(err) reject(err)
     const files = res.data.files;
-    callback(files)    
+    resolve(files)
   });    
+})
+
+const authenticate = async () => {
+  try {
+    console.log('authenticating...')
+    const credentials = JSON.parse(fs.readFileSync('./credentials.json', 'utf8'))
+    const { client_secret, client_id, redirect_uris} = credentials.installed;
+    auth = new google.auth.OAuth2(client_id, client_secret, redirect_uris[0]);
+    const token = JSON.parse(fs.readFileSync(TOKEN_PATH, 'utf8'))
+    auth.setCredentials(token);
+    drive = google.drive({version: 'v3', auth});
+    console.log('authenticated.')
+  } catch(e) {
+    console.log('error to authenticate.', e)
+  }
 }
 
-function searchByName(auth,callback) {  
-  const drive = google.drive({version: 'v3', auth});     
-  drive.files.list({
-    q: `name = '${params.name}'`    
-  }, (err, res) => {
-    if (err) return { err };
-    const files = res.data.files;
-    callback(files)
-  })     
-}
+authenticate().then(async ()=>{
 
-function action(callback,p,callback2) {  
-  if(callback == 'listFiles') {
-    callback = listFiles
-  }
-  if(callback == 'uploadFile') {
-    callback = uploadFile
-  }
-  if(callback == 'deleteFile') {
-    callback = deleteFile
-  }
-  if(callback == 'createFolder') {
-    callback = createFolder
-  }
-  if(callback == 'searchByName') {
-    callback = searchByName
-  }
-  if(callback == 'createfolderifnotexists') {
-    callback = createfolderifnotexists
-  }
-  for(i in p) {
-    params[i] = p[i];
-  }
-  // console.log(sale2folder+'/credentials.json')
-  // params = p
-  fs.readFile('./credentials.json', (err, content) => {
-    if (err) return console.log('Error loading client secret file:', err);  
-    authorize(JSON.parse(content), callback, ret => callback2(ret) );
-  });
-}
+  const rs = await search({name: 'hakuna'})
 
-module.exports = {action}
-// action('listFiles',{},data=>console.log(data))
-// action('searchByName', {name: "sale2"}, data=>{console.log(data)})
-// action(uploadFile, {dir:"./", filename:"package.json", drivefolder: "sale2"}, rst => console.log('Upload success',rst)) 
-// action(deleteFile, {id:"1q2dx1wEkSDY8j3bC9_nI5jQOiZNiEAdF"}, s=>console.log(s))
-// action('createFolder', {name: "Sale2", parents: ["1s8zkmC0EhazA6RflB71yzULgT6hKvn_y"]}, s=>{console.log(s);})
-// action('createfolderifnotexists',{name:'sale2'},c=> console.log(c))
+  console.log(rs)
+
+})
+
+module.exports = { authenticate }
