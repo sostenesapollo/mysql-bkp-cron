@@ -38,35 +38,34 @@ cron.schedule(process.env.CRON_SETUP, () => {
 
 async function RealizaBackupDrive() {
 	try {		
-		RealizaBackupOffline().then( file => {
-			drive.action('createfolderifnotexists',{name: driveFolder}, rst=> {
-				if(rst.err)	{
-					console.log(`Erro ao criar pasta ${driveFolder} no drive`, rst.err);
-				}else{	
-					drive.action('searchByName', { name: driveFolder }, data=>{					
-						let folderid = data[0]['id']	
-						drive.action('createfolderifnotexists',{name:driveFolder, parents:[folderid]}, rst=> {						
-							if(rst.err) {
-								console.log('erro ao criar pasta', rst.err);
-							}else{
-								drive.action('searchByName', {name: driveFolder}, data=>{
-									let folderid = data[0]['id']									
-									drive.action("uploadFile",{dir:backupFolderLocally, filename:file, folderid: folderid},r=>{
-										console.log("Resultado upload Drive", r)										
-									})						
-								})
-							}
-						})
+		const file = await generateLocalDump()
+		drive.action('createfolderifnotexists',{name: driveFolder}, rst=> {
+			if(rst.err)	{
+				console.log(`Erro ao criar pasta ${driveFolder} no drive`, rst.err);
+			}else{	
+				drive.action('searchByName', { name: driveFolder }, data=>{					
+					let folderid = data[0]['id']	
+					drive.action('createfolderifnotexists',{name:driveFolder, parents:[folderid]}, rst=> {						
+						if(rst.err) {
+							console.log('erro ao criar pasta', rst.err);
+						}else{
+							drive.action('searchByName', {name: driveFolder}, data=>{
+								let folderid = data[0]['id']									
+								drive.action("uploadFile",{dir:backupFolderLocally, filename:file, folderid: folderid},r=>{
+									console.log("Resultado upload Drive", r)										
+								})						
+							})
+						}
 					})
-				}
-			})				
+				})
+			}
 		})
 	} catch(error) {
 	  console.log("Catch RealizaBackupDriveError",error);	  
 	}
 }
 
-function RealizaBackupOffline() {
+function generateLocalDump() {
 	return new Promise((resolve, reject)=>{	
 		let file = nameForDump(driveFolder)		
 		let DirAndFilename = nameForDump(backupFolderLocally+driveFolder)
