@@ -4,14 +4,13 @@ const TOKEN_PATH = './token.json';
 var drive;
 var auth;
 
-
 const search = ({name, fileId}) => new Promise((resolve, reject) => {  
   
   let q;
   
   if(name) q = `name = '${name}'`;
   if(fileId) q = name ? `and '${fileId}' in parents` : `'${fileId}' in parents`;
-
+  
   drive.files.list({
     fileId,
     includeRemoved: false,
@@ -36,12 +35,12 @@ const uploadFile = (callback) => {
 
 const createFolderIfNotExists = ({ name, parents }) => { 
   return new Promise(async (resolve, reject) => {
-      const folder = await search({name})
+      let folder = await search({name})
       if(folder.length) {
-        resolve({created: false, exists: true})
+        resolve({created: false, exists: true, folder: folder[0].id})
       } else {
-        await createFolder({ name, parents })
-        resolve({created: true})
+        folder = (await createFolder({ name, parents }))[0]
+        resolve({created: true, folder: folder.data})
       }
   })
 }
@@ -83,12 +82,4 @@ const authenticate = async () => {
   }
 }
 
-authenticate().then(async ()=>{
-
-  const rs = await search({name: 'hakuna'})
-
-  console.log(rs)
-
-})
-
-module.exports = { authenticate }
+module.exports = { authenticate, createFolderIfNotExists }
