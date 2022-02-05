@@ -14,13 +14,6 @@ const password = process.env.MYSQL_PASSWORD
 const user = process.env.MYSQL_USER
 const driveFolder = process.env.DRIVE_FOLDER_NAME
 
-console.log('Drive Folder:', driveFolder)
-
-// console.log('crontab', process.env.CRON_SETUP)
-// cron.schedule(process.env.CRON_SETUP, () => {
-//   RealizaBackupDrive()
-// });
-
 const testMysqlConnection = async () => {
 	const pool = mysql.createConnection({host, user,password,database});
 	const promisePool = pool.promise();
@@ -51,4 +44,7 @@ const mysqldump = async () => {
 	}
 }
 
-mysqldump()
+console.log('📁 Drive Folder:', driveFolder)
+console.log('🚩 Crontab', process.env.CRON_SETUP)
+
+cron.schedule(process.env.CRON_SETUP, () => mysqldump());
