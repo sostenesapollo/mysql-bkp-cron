@@ -29,7 +29,8 @@ const testMysqlConnection = async () => {
 
 const mysqldump = async () => {
 	try {
-		const filename = `${dumpFolder}${ getFilename({name: `${database}`}) }`
+		const name = getFilename({name: `${database}`})
+		const filename = `${dumpFolder}${name}`
 		
 		if (!fs.existsSync(dumpFolder)) fs.mkdirSync(dumpFolder)
 		
@@ -43,7 +44,8 @@ const mysqldump = async () => {
 		const { folder: yearFolder } = await drive.createFolderIfNotExists({name: getCurrentYear(), parent: baseFolder})
 		const { folder: monthFolder } = await drive.createFolderIfNotExists({name: getCurrentMonthLong(), parent: yearFolder})
 
-
+		const id = await drive.uploadFile({name, filename, parent: monthFolder})
+		console.log(id)
 	}catch(e) {
 		console.log('error to dump', e)
 	}

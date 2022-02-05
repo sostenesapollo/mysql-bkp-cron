@@ -18,4 +18,5 @@ CRON_SETUP='0 0 8,9,12,15,18 * * *'
 - [x] Creating folders inside folders
 - [x] Creating dynamic Year folder
 - [x] Creating dynamic Month folder
-- [ ] Upload Dumps to respective month folder
+- [x] Upload Dumps to respective month folder
+- [ ] Remove Local Dumps 

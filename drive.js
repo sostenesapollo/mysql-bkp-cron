@@ -29,14 +29,15 @@ const search = ({name, folderId}) => new Promise((resolve, reject) => {
 
 })
 
-const uploadFile = (callback) => {
-  var fileMetadata = { 'name': params['filename'],parent:[params.folderid] }      
-  var media = { body: fs.createReadStream(params.dir+params.filename) };        
+const uploadFile = ({name, filename, parent}) => new Promise((resolve, reject)=>{
+  let resource = { name, parents: [parent] }      
+  let media = { body: fs.createReadStream(filename) };
 
-  drive.files.create({resource: fileMetadata,media: media, fields: 'id'}, (err, file)=>{ 
-    if(err){callback({erro:err})}else{callback(file['data']['id'])} 
+  drive.files.create({ resource, media, fields: 'id' }, (err, file)=>{ 
+    if(err)reject(err)
+    resolve(file['data']['id'])
   })
-}
+})
 
 const createFolderIfNotExists = ({ name, parent }) => { 
   return new Promise(async (resolve, reject) => {
@@ -96,4 +97,4 @@ const authenticate = async () => {
 //     search({ name: 'newss', folderId: '1SJl6NNqEA4XG2FnAJyk0s6lw4jl8448m'}).then(console.log).catch(console.log)
 //   )
 
-module.exports = { authenticate, createFolderIfNotExists }
+module.exports = { authenticate, createFolderIfNotExists, uploadFile }
