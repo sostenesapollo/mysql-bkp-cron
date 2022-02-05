@@ -13,6 +13,7 @@ const database = process.env.MYSQL_DATABASE
 const password = process.env.MYSQL_PASSWORD
 const user = process.env.MYSQL_USER
 const driveFolder = process.env.DRIVE_FOLDER_NAME
+const cleanFolder = process.env.CLEAN_FOLDER
 
 const testMysqlConnection = async () => {
 	const pool = mysql.createConnection({host, user,password,database});
@@ -38,7 +39,15 @@ const mysqldump = async () => {
 		const { folder: monthFolder } = await drive.createFolderIfNotExists({name: getCurrentMonthLong(), parent: yearFolder})
 
 		const id = await drive.uploadFile({name, filename, parent: monthFolder})
-		console.log(id)
+
+		console.log('✅ Uploaded to Drive. | ', id)
+
+		if(cleanFolder === 'true') {
+			console.log('Cleaning local Folder...')
+			await syncExec(`rm ${dumpFolder}/*`)
+			console.log('Local folder cleaned.')
+		}
+
 	}catch(e) {
 		console.log('error to dump', e)
 	}

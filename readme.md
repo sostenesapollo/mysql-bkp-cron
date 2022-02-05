@@ -16,6 +16,7 @@ MYSQL_PASSWORD=example
 MYSQL_DATABASE=db_name
 CRON_SETUP='0 0 8,9,12,15,18 * * *'
 # CRON_SETUP='*/7 * * * * *'
+# CLEAN_FOLDER=false # clear folder after backup
 ```
 ##### Add Google Drive `token.json` and `credentials.json` files in root folder.
 
@@ -25,4 +26,6 @@ CRON_SETUP='0 0 8,9,12,15,18 * * *'
 - [x] Creating dynamic Month folder
 - [x] Upload Dumps to respective month folder
 - [x] Minify as tar.gz
-- [ ] Remove Local Dumps
+- [x] Remove Local Dumps
+- [ ] Send a mail on success
+- [ ] Send a mail on failure

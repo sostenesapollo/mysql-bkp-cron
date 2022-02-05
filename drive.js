@@ -1,5 +1,6 @@
 const fs = require('fs');
 const {google} = require('googleapis');
+const syncExec = require('sync-exec');
 const TOKEN_PATH = './token.json';
 var drive;
 var auth;
