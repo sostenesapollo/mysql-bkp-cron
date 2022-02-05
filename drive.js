@@ -4,18 +4,23 @@ const TOKEN_PATH = './token.json';
 var drive;
 var auth;
 
-const search = ({name, fileId}) => new Promise((resolve, reject) => {  
-  
+const createFolder = async ({name, parent}) => new Promise((resolve, reject)=>{
+  drive.files.create({resource: { name,'mimeType': 'application/vnd.google-apps.folder', parents: [parent]},fields: 'id, parents'}, (err, file) => {
+    if(err) reject(err)
+    resolve(file)
+  });
+})
+
+const search = ({name, folderId}) => new Promise((resolve, reject) => {  
   let q;
-  
   if(name) q = `name = '${name}'`;
-  if(fileId) q = name ? `and '${fileId}' in parents` : `'${fileId}' in parents`;
-  
+  if(folderId) q = name ? `'${folderId}' in parents and ${q}` : `'${folderId}' in parents`;
+
   drive.files.list({
-    fileId,
+    fileId: folderId,
     includeRemoved: false,
     spaces: 'drive',
-    fields: 'nextPageToken, files(id, name, mimeType)',
+    fields: 'nextPageToken, files(id, name, mimeType, parents)',
     q
   }, (err, res) => {
     if (err || res.errors) reject(err.errors)
@@ -25,7 +30,7 @@ const search = ({name, fileId}) => new Promise((resolve, reject) => {
 })
 
 const uploadFile = (callback) => {
-  var fileMetadata = { 'name': params['filename'],parents:[params.folderid] }      
+  var fileMetadata = { 'name': params['filename'],parent:[params.folderid] }      
   var media = { body: fs.createReadStream(params.dir+params.filename) };        
 
   drive.files.create({resource: fileMetadata,media: media, fields: 'id'}, (err, file)=>{ 
@@ -33,15 +38,25 @@ const uploadFile = (callback) => {
   })
 }
 
-const createFolderIfNotExists = ({ name, parents }) => { 
+const createFolderIfNotExists = ({ name, parent }) => { 
   return new Promise(async (resolve, reject) => {
-      let folder = await search({name})
-      if(folder.length) {
-        resolve({created: false, exists: true, folder: folder[0].id})
-      } else {
-        folder = (await createFolder({ name, parents }))[0]
-        resolve({created: true, folder: folder.data})
-      }
+    let folder = await search({ name, folderId: parent })
+
+    // console.log('*', folder)
+
+    if(parent)
+      folder = folder.filter(f => f.parents.includes(parent))
+  
+    if(folder[0]?.id) {
+      console.log(`- Pasta ${name} já existe  | id: ${folder[0].id}`)
+      
+      resolve({created: false, exists: true, folder: folder[0].id})
+    } else {
+      console.log(`+ Não existe ${name}, criando...`)
+      folder = (await createFolder({ name, parent }))
+      console.log(`+ ${name} criado com sucesso | id: ${folder.data.id}`)
+      resolve({ created: true, folder: folder.data.id })
+    }
   })
 }
 
@@ -50,13 +65,6 @@ const deleteFile = ({fileId}) => new Promise((resolve, reject) => {
     if(err) reject(err)
     resolve(file)
   })
-})
-
-const createFolder = async ({name, parents}) => new Promise((resolve, reject)=>{
-  drive.files.create({resource: { name,'mimeType': 'application/vnd.google-apps.folder', parents},fields: 'id'}, (err, file) => {
-    if(err) reject(err)
-    resolve(file)
-  });
 })
   
 const listFiles = () => new Promise((resolve, reject) => {
@@ -81,5 +89,11 @@ const authenticate = async () => {
     console.log('error to authenticate.', e)
   }
 }
+
+// authenticate()
+//   .then(()=>
+//     // createFolderIfNotExists({name: 'newss'})
+//     search({ name: 'newss', folderId: '1SJl6NNqEA4XG2FnAJyk0s6lw4jl8448m'}).then(console.log).catch(console.log)
+//   )
 
 module.exports = { authenticate, createFolderIfNotExists }
