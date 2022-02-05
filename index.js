@@ -33,15 +33,12 @@ const mysqldump = async () => {
 		
 		if (!fs.existsSync(dumpFolder)) fs.mkdirSync(dumpFolder)
 		
-		console.log('--Dumping database...', filename)
+		console.log('- Dumping database...', filename)
 
 		await testMysqlConnection()
-
 		await syncExec(`docker exec -i $(docker ps --filter "ancestor=mysql" -q) mysqldump -u ${user} -p${password.replace('\n','')} ${database} | gzip -c > ${filename}`)
-
-		console.log(`Creating folder ${driveFolder} in drive if not exists...`)
-
 		await drive.authenticate()
+
 		const { folder: baseFolder } = await drive.createFolderIfNotExists({name: driveFolder})
 		const { folder: yearFolder } = await drive.createFolderIfNotExists({name: getCurrentYear(), parent: baseFolder})
 		const { folder: monthFolder } = await drive.createFolderIfNotExists({name: getCurrentMonthLong(), parent: yearFolder})
