@@ -1,5 +1,7 @@
 ### Backup Mysql Running In A Docker Container and upload to Google Drive
 
+## !! Tested with node version 16.13.0
+
 <img src="https://raw.githubusercontent.com/sostenesapollo/mysql-bkp-cron/a87f04027f7321e60bf6c21eba7fdfa7132752cd/static/screenshot_001.jpeg" alt="drawing" style="width:400px;"/>
 
 ##### You can Run Mysql using this docker-compose image:
@@ -29,3 +31,4 @@ CRON_SETUP='0 0 8,9,12,15,18 * * *'
 - [x] Remove Local Dumps
 - [ ] Send a mail on success
 - [ ] Send a mail on failure
+- [ ] Remove Local Dumps
