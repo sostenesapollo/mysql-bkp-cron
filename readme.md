@@ -1,5 +1,7 @@
 ### Backup Mysql Running In A Docker Container and upload to Google Drive
 
+<img src="https://raw.githubusercontent.com/sostenesapollo/mysql-bkp-cron/a87f04027f7321e60bf6c21eba7fdfa7132752cd/static/screenshot_001.jpeg" alt="drawing" style="width:200px;"/>
+
 #### 1 Create .env File
 `.env Example File`
 
@@ -20,4 +22,4 @@ CRON_SETUP='0 0 8,9,12,15,18 * * *'
 - [x] Creating dynamic Month folder
 - [x] Upload Dumps to respective month folder
 - [x] Minify as tar.gz
-- [ ] Remove Local Dumps 
+- [ ] Remove Local Dumps
