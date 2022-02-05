@@ -19,4 +19,5 @@ CRON_SETUP='0 0 8,9,12,15,18 * * *'
 - [x] Creating dynamic Year folder
 - [x] Creating dynamic Month folder
 - [x] Upload Dumps to respective month folder
+- [x] Minify as tar.gz
 - [ ] Remove Local Dumps 
