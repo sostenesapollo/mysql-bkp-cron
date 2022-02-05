@@ -13,3 +13,9 @@ CRON_SETUP='0 0 8,9,12,15,18 * * *'
 # CRON_SETUP='*/7 * * * * *'
 ```
 ##### Add Google Drive `token.json` and `credentials.json` files in root folder.
+
+## Creating folders inside folders
+- [x] Creating folders inside folders
+- [x] Creating dynamic Year folder
+- [x] Creating dynamic Month folder
+- [ ] Upload Dumps to respective month folder
