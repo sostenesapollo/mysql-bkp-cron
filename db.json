@@ -1,0 +1,11 @@
+[
+    {
+        "driveFolder": "folder_name",
+        "host": "127.0.0.1",
+        "user": "root",
+        "password": "example",
+        "database": "db_name",
+        "dumpFolder": "./backups/",
+        "cronSetup":"0 0 8,9,12,15,18 * * *"
+    }
+]

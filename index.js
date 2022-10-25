@@ -6,31 +6,27 @@ const fs = require('fs');
 const drive = require('./drive')
 const { getFilename, getCurrentMonthLong, getCurrentYear } = require('./util')
 
-const dumpFolder = './backups/'
+const databasesConfigs = require('./db.json')
 
-const host = 'localhost'
-const database = process.env.MYSQL_DATABASE
-const password = process.env.MYSQL_PASSWORD
-const user = process.env.MYSQL_USER
-const driveFolder = process.env.DRIVE_FOLDER_NAME
-const cleanFolder = process.env.CLEAN_FOLDER
-
-const testMysqlConnection = async () => {
+const testMysqlConnection = async ({host, user, password, database}) => {
 	const pool = mysql.createConnection({host, user,password,database});
 	const promisePool = pool.promise();
 	const [rows,fields] = await promisePool.query("SELECT 1");
 }
 
-const mysqldump = async () => {
+const mysqldump = async ({
+	dumpFolder,
+	host,
+	user,
+	password,
+	database
+}) => {
 	try {
-		const name = getFilename({name: `${database}`})
-		const filename = `${dumpFolder}${name}`
-		
 		if (!fs.existsSync(dumpFolder)) fs.mkdirSync(dumpFolder)
 		
 		console.log('- Dumping database...', filename)
 
-		await testMysqlConnection()
+		await testMysqlConnection({host, user, password, database})
 		await syncExec(`docker exec -i $(docker ps --filter "ancestor=mysql" -q) mysqldump -u ${user} -p${password.replace('\n','')} ${database} | gzip -c > ${filename}`)
 		await drive.authenticate()
 
@@ -40,7 +36,7 @@ const mysqldump = async () => {
 
 		const id = await drive.uploadFile({name, filename, parent: monthFolder})
 
-		console.log('✅ Uploaded to Drive. | ', id)
+		console.log(`✅ Uploaded to Drive. | ${id} | database: ${database}`)
 
 		if(cleanFolder === 'true') {
 			console.log('Cleaning local Folder...')
@@ -53,7 +49,12 @@ const mysqldump = async () => {
 	}
 }
 
-console.log('📁 Drive Folder:', driveFolder)
-console.log('🚩 Crontab', process.env.CRON_SETUP)
 
-cron.schedule(process.env.CRON_SETUP, () => mysqldump());
+for(let databaseConfig of databasesConfigs) {
+	
+	console.log('📁 Drive Folder:', databaseConfig.driveFolder)
+	console.log('🚩 Crontab', databaseConfig.cronSetup)
+
+	cron.schedule(process.env.CRON_SETUP, () => mysqldump(databaseConfig) )
+
+}
