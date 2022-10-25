@@ -16,6 +16,7 @@ const testMysqlConnection = async ({host, user, password, database}) => {
 
 const mysqldump = async ({
 	dumpFolder,
+	driveFolder,
 	host,
 	user,
 	password,
