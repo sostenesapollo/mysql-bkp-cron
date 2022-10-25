@@ -24,6 +24,9 @@ const mysqldump = async ({
 	try {
 		if (!fs.existsSync(dumpFolder)) fs.mkdirSync(dumpFolder)
 		
+		const name = getFilename({name: `${database}`})
+		const filename = `${dumpFolder}${name}`
+		
 		console.log('- Dumping database...', filename)
 
 		await testMysqlConnection({host, user, password, database})
@@ -55,6 +58,6 @@ for(let databaseConfig of databasesConfigs) {
 	console.log('📁 Drive Folder:', databaseConfig.driveFolder)
 	console.log('🚩 Crontab', databaseConfig.cronSetup)
 
-	cron.schedule(process.env.CRON_SETUP, () => mysqldump(databaseConfig) )
+	cron.schedule(databaseConfig.cronSetup, () => mysqldump(databaseConfig) )
 
 }
