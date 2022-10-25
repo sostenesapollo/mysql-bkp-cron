@@ -20,7 +20,8 @@ const mysqldump = async ({
 	host,
 	user,
 	password,
-	database
+	database,
+	cleanFolder
 }) => {
 	try {
 		if (!fs.existsSync(dumpFolder)) fs.mkdirSync(dumpFolder)
